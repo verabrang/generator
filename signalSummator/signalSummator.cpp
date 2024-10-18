@@ -40,13 +40,14 @@ std::vector<float> signalSummator::makeSummSignalSamples(uint32_t number)
 {
     std::vector<float> summsig(number, 0);
 
-    for(uint32_t i = 0; i < sinesInfo.samplesStart.size(); i++)
+    for(uint32_t i = 0; i < sinesInfo.sineOscillators.size(); i++)
     {
         if(sinesInfo.samplesFinish[i] > number)
             throw std::invalid_argument("number for makeSummSignalSamples shoud be more than number for sine");
         std::vector<float> sine;
-        //генерация синусойды
-        sine = sinesInfo.sineOscillators[i].genSamples(sinesInfo.samplesFinish[i] - sinesInfo.samplesStart[i]);
+        //генерация синусоиды:
+        uint32_t sineSize = sinesInfo.samplesFinish[i] - sinesInfo.samplesStart[i];
+        sine = sinesInfo.sineOscillators[i].genSamples(sineSize);
 
         for(uint32_t j = 0; j < sine.size(); j++)
         {

@@ -16,14 +16,48 @@ std::vector<int> wavWriter::fromFloatToInt(std::vector<float> signal)
     return intSignal;
 }
 
+void wavWriter::writeToFile(std::ofstream &file, int value, int size)
+{
+    file.write(reinterpret_cast<const char*>(&value), size);
+}
+
 
 void wavWriter::writeToWav(std::vector<int> signal)
 {
     std::ofstream audioFile;
     audioFile.open("waveform.wav", std::ios::binary);
+//Header chunk
+    audioFile << "RIFF";
+    audioFile << "----";
+    audioFile << "WAVE";
+
+//format chunk
+    audioFile << "fmt ";
+    writeToFile(audioFile, 16, 4);//размер fmt
+    writeToFile(audioFile, 1, 2 ); //сжатие
+    writeToFile(audioFile, 1, 2); //канал
+    writeToFile(audioFile, sampleRate, 4);
+    writeToFile(audioFile, sampleRate*bitDepth / 8, 4); //битовая скорость передачи (в байтах)
+    writeToFile(audioFile, 2, 2); // 16(int)/8*1(numbchannal)
+    writeToFile(audioFile, bitDepth, 2);
 
 
-    for(int i = 0; i < signal.size(); i++)
-        audioFile.write(reinterpret_cast<char*>(&signal[i]), 2);
+//data chunk
+    audioFile << "data";
+    audioFile << "----";
 
+    int preAudioPosition = audioFile.tellp();
+    for(size_t i = 0; i < signal.size(); i++)
+        writeToFile(audioFile, signal[i], 2);
+
+    int postAudioPosition = audioFile.tellp();
+
+    audioFile.seekp(preAudioPosition - 4);
+    writeToFile(audioFile, postAudioPosition - preAudioPosition, 4);
+
+    audioFile.seekp(4, std::ios::beg); //от начала 4 байта
+
+    writeToFile(audioFile, postAudioPosition - 8, 4); //первые восемь байт заголовка не нужны
+
+    audioFile.close();
 }
